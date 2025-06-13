@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>히라가나 공부 게임</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: sans-serif; overflow: hidden; background: #e0f7fa; }
+    .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+               display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .overlay h1 { font-size: 48px; margin-bottom: 20px; }
+    .overlay button { padding: 12px 24px; font-size: 18px; cursor: pointer; }
+
+    #game { position: relative; width: 100%; height: 100vh; overflow: hidden; }
+    .cloud {
+      position: absolute;
+      background: #ffffff;
+      padding: 10px 20px;
+      border-radius: 60px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      opacity: 0.9;
+    }
+    @keyframes fall {
+      from { transform: translateY(-100px); }
+      to   { transform: translateY(110vh); }
+    }
+    .fall {
+      animation-name: fall;
+      animation-timing-function: linear;
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%,75% { transform: translateX(-5px); }
+      50%     { transform: translateX(5px); }
+    }
+    .shake {
+      animation: shake 0.5s;
+    }
+    #inputSection {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #answerInput { padding: 10px; font-size: 16px; width: 200px; }
+    #submitBtn { padding: 10px 16px; margin-left: 8px; font-size: 16px; cursor: pointer; }
+
+    #score { position: absolute; top: 10px; right: 10px; font-size: 20px; }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="startScreen">
+    <h1>히라가나 공부 게임</h1>
+    <button id="startBtn">시작하기</button>
+  </div>
+  <div id="game" style="display:none;">
+    <div id="score">0</div>
+    <div id="inputSection">
+      <input id="answerInput" placeholder="한국어 발음 입력">
+      <button id="submitBtn">입력</button>
+    </div>
+  </div>
+
+  <script>
+  const cards = {
+    'a': ['あ','아'], 'i':['い','이'], 'u':['う','우'], 'e':['え','에'], 'o':['お','오'],
+    'ka':['か','카'],'ki':['き','키'],'ku':['く','쿠'],'ke':['け','케'],'ko':['こ','코'],
+    'sa':['さ','사'],'shi':['し','시'],'su':['す','스'],'se':['せ','세'],'so':['そ','소'],
+    'ta':['た','타'],'chi':['ち','치'],'tsu':['つ','츠'],'te':['て','테'],'to':['と','토'],
+    'na':['な','나'],'ni':['に','니'],'nu':['ぬ','누'],'ne':['ね','네'],'no':['の','노'],
+    'ha':['は','하'],'hi':['ひ','히'],'fu':['ふ','후'],'he':['へ','헤'],'ho':['ほ','호'],
+    'ma':['ま','마'],'mi':['み','미'],'mu':['む','무'],'me':['め','메'],'mo':['も','모']
+  };
+  let score = 0;
+  const gameDiv = document.getElementById('game');
+  const startScreen = document.getElementById('startScreen');
+  const startBtn = document.getElementById('startBtn');
+  const answerInput = document.getElementById('answerInput');
+  const submitBtn = document.getElementById('submitBtn');
+  const scoreDiv = document.getElementById('score');
+  let activeWords = [];
+
+  function createWord() {
+    const n = Math.floor(Math.random() * 4) + 2;
+    const keys = Object.keys(cards);
+    let sel = [];
+    for (let i = 0; i < n; i++) sel.push(keys[Math.floor(Math.random() * keys.length)]);
+    const hira = sel.map(k => cards[k][0]).join('');
+    const kor  = sel.map(k => cards[k][1]).join('');
+    const div  = document.createElement('div');
+    div.className = 'cloud fall';
+    div.textContent = hira;
+    div.dataset.kor = kor;
+    const x = Math.random() * (window.innerWidth - 100);
+    div.style.left = x + 'px';
+    const dur = 5 + Math.random() * 5;
+    div.style.animationDuration = dur + 's';
+    gameDiv.appendChild(div);
+    activeWords.push(div);
+    setTimeout(() => {
+      if (gameDiv.contains(div)) {
+        gameDiv.removeChild(div);
+        activeWords = activeWords.filter(w => w !== div);
+      }
+    }, dur * 1000);
+  }
+
+  let spawnInterval;
+  startBtn.onclick = () => {
+    startScreen.style.display = 'none';
+    gameDiv.style.display = 'block';
+    spawnInterval = setInterval(createWord, 1000);
+  };
+
+  submitBtn.onclick = () => {
+    const ans = answerInput.value.trim();
+    let found = false;
+    activeWords.forEach(w => {
+      if (w.dataset.kor === ans) {
+        gameDiv.removeChild(w);
+        activeWords = activeWords.filter(x => x !== w);
+        score++;
+        scoreDiv.textContent = score;
+        found = true;
+      }
+    });
+    if (!found && activeWords.length) {
+      answerInput.classList.add('shake');
+      setTimeout(() => answerInput.classList.remove('shake'), 500);
+    }
+    answerInput.value = '';
+  };
+  </script>
+</body>
+</html>
